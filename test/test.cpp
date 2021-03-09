@@ -39,5 +39,12 @@ int main() {
     std::function<int(double&)> func = [&](double& x) { return u(e); };
     Vec<int> ivec2 = dvec2.transform(func);
     ivec2.sort();
+
+    struct SquareFunctionImpl {
+        using ResultType = int;
+        static inline ResultType apply(int &i) { return i*i; }
+    };
+    ivec2.vec_transform<SquareFunctionImpl>();
+
     return 0;
 }

@@ -27,28 +27,37 @@ public:
     Vec(const Vec<T>& other) {
         _capacity = other.len();
         _len = other.len();
-        _data = new (std::nothrow) T[_len];
+        _data = new (std::nothrow) T[_capacity];
         memcpy(_data, other._data, sizeof(T) * _len);
     }
 
     Vec<T>& operator=(const Vec<T>& other) {
         _capacity = other.len();
-        _len = other.len;
-        _data = new (std::nothrow) T[_len];
+        _len = other.len();
+        _data = new (std::nothrow) T[_capacity];
         memcpy(_data, other._data, sizeof(T) * _len);
         return *this;
     }
 
     Vec<T>& operator=(Vec<T>&& other) {
-        std::swap(*this, other);
+        *this = std::move(other);
         return *this;
     }
 
-    Vec(Vec<T>&& other) { std::swap(*this, other); }
+    Vec(Vec<T>&& other) { 
+        _len = 0;
+        _capacity = 0;
+        _data = nullptr;
+        std::swap(_len, other._len);
+        std::swap(_capacity, other._capacity);
+        std::swap(_data, other._data);
+    }
 
     int len() const { return _len; }
 
     T* data() const { return _data; }
+
+    int capacity() const { return _capacity; }
 
     T* data() { return _data; }
 
@@ -204,11 +213,13 @@ public:
     }
 
     void reserve(int len) {
+        VEC_ASSERT_TRUE(len >= 0);
         if (_capacity < len) {
             T* old_data = _data;
             _data = new (std::nothrow) T[len];
             memcpy(_data, old_data, sizeof(T) * _len);
             delete[] old_data;
+            _capacity = len;
         }
     }
 
@@ -239,14 +250,14 @@ public:
         _data[index] = value;
     }
 
-    void apply(std::function<void(T&)> &func) {
+    void apply(std::function<void(T&)>& func) {
         for (int i = 0; i < _len; ++i) {
             _data[i] = func(_data[i]);
         }
     }
 
     template <class U>
-    Vec<U> transform(std::function<U(T&)> &func) const {
+    Vec<U> transform(std::function<U(T&)>& func) const {
         Vec<U> vec(_len);
         for (int i = 0; i < _len; ++i) {
             vec.data()[i] = func(_data[i]);
@@ -254,7 +265,27 @@ public:
         return vec;
     }
 
+    template <typename OP>
+    Vec<T> vec_transform() {
+        Vec<T> vec(_len);
+        for (int i = 0; i < _len; ++i) {
+            vec.data()[i] = OP::apply(_data[i]);
+        }
+        return vec;
+    }
+
     void sort() { std::sort(_data, _data + _len); }
+
+    void push_back(const T& t) {
+        if (_len == _capacity) {
+            reserve(_capacity * 2 + 1);
+        }
+        _data[_len++] = t;
+    }
+
+    void clear() {
+        _len = 0;
+    }
 
 private:
     int _capacity;
