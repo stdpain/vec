@@ -4,7 +4,9 @@
 #include <functional>
 #include <new>
 
+#ifndef VEC_ASSERT_TRUE
 #define VEC_ASSERT_TRUE assert
+#endif
 
 namespace vec {
 
@@ -39,12 +41,19 @@ public:
         return *this;
     }
 
+    Vec<T>& operator=(const T& other) {
+        for (int i = 0; i < _len; ++i) {
+            this->data()[i] = other;
+        }
+        return *this;
+    }
+
     Vec<T>& operator=(Vec<T>&& other) {
         *this = std::move(other);
         return *this;
     }
 
-    Vec(Vec<T>&& other) { 
+    Vec(Vec<T>&& other) {
         _len = 0;
         _capacity = 0;
         _data = nullptr;
@@ -283,9 +292,7 @@ public:
         _data[_len++] = t;
     }
 
-    void clear() {
-        _len = 0;
-    }
+    void clear() { _len = 0; }
 
 private:
     int _capacity;

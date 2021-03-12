@@ -2,3 +2,5 @@
 *.out
 *.so
 *.idx
+build
+build_Release

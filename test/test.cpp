@@ -3,24 +3,35 @@
 #include <random>
 #include <string>
 
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "vec/vec.h"
 
-int main() {
-    using namespace vec;
-    Vec<int> ivec(1024);
-    //expect vectorized
+namespace vec {
+TEST(VecBasicTest, Test) {
+    const int test_vec_length = 1024;
+    Vec<int> ivec(test_vec_length);
+    // test ivec length
+    ASSERT_EQ(ivec.len(), test_vec_length);
+    // test vec add and default value
     ivec += 4;
-    Vec<double> dvec(1024);
-    //expect vectorized
-    dvec += 4.5;
-    //expect vectorized
+    for (int i = 0; i < test_vec_length; ++i) {
+        ASSERT_EQ(ivec.data()[i], 4);
+    }
+    Vec<double> dvec(test_vec_length);
+    // test assign function
+    dvec = 4.5;
+    for (int i = 0; i < test_vec_length; i++) {
+        ASSERT_EQ(dvec.data()[i], 4.5);
+    }
+    // test add function
     dvec += ivec;
     for (int i = 0; i < dvec.len(); i++) {
-        assert(dvec.data()[i] == 4 + 4.5);
+        ASSERT_EQ(dvec.data()[i], 4 + 4.5);
     }
     auto bvec = dvec > ivec;
     for (int i = 0; i < dvec.len(); i++) {
-        assert(bvec.data()[i]);
+        ASSERT_TRUE(bvec.data()[i]);
     }
     int counter = 0;
     for (int i = 0; i < dvec.len(); i += 10) {
@@ -30,7 +41,7 @@ int main() {
     //expect vectorized
     auto bvec2 = dvec > 1024;
     Vec<double> dvec2 = dvec[bvec2];
-    assert(dvec2.len() == counter);
+    ASSERT_EQ(dvec2.len(), counter);
 
     // bench start
     // generate data
@@ -42,9 +53,13 @@ int main() {
 
     struct SquareFunctionImpl {
         using ResultType = int;
-        static inline ResultType apply(int &i) { return i*i; }
+        static inline ResultType apply(int& i) { return i * i; }
     };
     ivec2.vec_transform<SquareFunctionImpl>();
+}
+} // namespace vec
 
-    return 0;
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
