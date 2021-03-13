@@ -13,7 +13,7 @@ DIR=$(cd $(dirname $0) && pwd )
 mkdir $DIR/$BUILD_DIR
 cd $DIR/$BUILD_DIR && 
     cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-        -DCMAKE_BUILD_TYPE=DEBUG \
+        -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -Dgperftools_enable_libunwind=NO \
         -Dgperftools_enable_frame_pointers=ON \

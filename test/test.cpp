@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <random>
 #include <string>
 
@@ -56,6 +58,23 @@ TEST(VecBasicTest, Test) {
         static inline ResultType apply(int& i) { return i * i; }
     };
     ivec2.vec_transform<SquareFunctionImpl>();
+}
+
+TEST(VecBasicTest, IteratorTest) {
+    std::default_random_engine e;
+    std::uniform_int_distribution<int> u(0, 4096);
+    std::function<int(int&)> func = [&](int& x) { return u(e); };
+    Vec<int> ivec(4096);
+
+    // test iterator
+    std::count_if(ivec.begin(), ivec.end(), [](auto ele) { return ele > 0; });
+    ASSERT_LT(ivec.begin(), ivec.end());
+    std::sort(ivec.begin(), ivec.end());
+    int last = std::numeric_limits<int>::min();
+    for (auto v : ivec) {
+        ASSERT_LE(last, v);
+        last = v;
+    }
 }
 } // namespace vec
 

@@ -1,8 +1,12 @@
+#pragma once
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <functional>
 #include <new>
+
+#include "vec/vec_iterator.h"
 
 #ifndef VEC_ASSERT_TRUE
 #define VEC_ASSERT_TRUE assert
@@ -293,6 +297,9 @@ public:
     }
 
     void clear() { _len = 0; }
+
+    VecIterator<T> begin() { return VecIterator<T>(_data); }
+    VecIterator<T> end() { return VecIterator<T>(_data + _len); }
 
 private:
     int _capacity;
