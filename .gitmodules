@@ -4,3 +4,6 @@
 [submodule "thirdparty/benchmark"]
 	path = thirdparty/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "thirdparty/gperftools"]
+	path = thirdparty/gperftools
+	url = https://github.com/stdpain/gperftools
