@@ -7,3 +7,6 @@
 [submodule "thirdparty/gperftools"]
 	path = thirdparty/gperftools
 	url = https://github.com/stdpain/gperftools
+[submodule "thirdparty/glog"]
+	path = thirdparty/glog
+	url = https://github.com/google/glog

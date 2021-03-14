@@ -5,8 +5,8 @@ export PATH=/opt/compiler/gcc-10/bin:$PATH
 export LIBRT=/opt/compiler/gcc-10/lib64/librt.so
 
 BUILD_THREAD=12
-BUILD_TYPE=DEBUG
-BUILD_DIR=build
+BUILD_TYPE=Debug
+BUILD_DIR=build_$BUILD_TYPE
 DIR=$(cd $(dirname $0) && pwd ) 
 
 #rm -rf build
@@ -17,6 +17,8 @@ cd $DIR/$BUILD_DIR &&
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -Dgperftools_enable_libunwind=NO \
         -Dgperftools_enable_frame_pointers=ON \
+        -Dgperftools_build_benchmark=OFF \
+        -DBUILD_TESTING=OFF \
         -DLIBRT=$LIBRT \
         -DCMAKE_INSTALL_PREFIX=`pwd`/install .. \
         && make -j $BUILD_THREAD  && make install

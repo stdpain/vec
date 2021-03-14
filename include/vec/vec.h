@@ -53,7 +53,9 @@ public:
     }
 
     Vec<T>& operator=(Vec<T>&& other) {
-        *this = std::move(other);
+        std::swap(_len, other._len);
+        std::swap(_capacity, other._capacity);
+        std::swap(_data, other._data);
         return *this;
     }
 
@@ -87,7 +89,7 @@ public:
     VEC_ASSERT_TRUE(other.len() == _len);             \
     Vec<T> vec;                                       \
     vec._len = _len;                                  \
-    vec._data = new T[_len];                          \
+    vec._data = new (std::nothrow) T[_len];           \
     for (int i = 0; i < _len; i++) {                  \
         vec.data()[i] = _data[i] opt other.data()[i]; \
     }                                                 \
