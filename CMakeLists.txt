@@ -34,6 +34,6 @@ add_subdirectory(thirdparty/glog)
 
 include_directories(include)
 add_executable(test.out test/test.cpp)
-target_link_libraries(test.out tcmalloc_and_profiler glog gtest gmock pthread)
+target_link_libraries(test.out tcmalloc_and_profiler glog gtest gmock m pthread)
 #target_link_libraries(test.out glog gtest gmock pthread)
 

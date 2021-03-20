@@ -265,9 +265,16 @@ public:
         _data[index] = value;
     }
 
-    void apply(std::function<void(T&)>& func) {
+    void apply(std::function<T(const T&)>& func) {
         for (int i = 0; i < _len; ++i) {
             _data[i] = func(_data[i]);
+        }
+    }
+
+    template <typename OP>
+    void apply() {
+        for (int i = 0; i < _len; ++i) {
+            _data[i] = OP::apply(_data[i]);
         }
     }
 
@@ -281,7 +288,7 @@ public:
     }
 
     template <typename OP>
-    Vec<T> vec_transform() {
+    Vec<T> vec_transform() const {
         Vec<T> vec(_len);
         for (int i = 0; i < _len; ++i) {
             vec.data()[i] = OP::apply(_data[i]);

@@ -1,9 +1,12 @@
 #include <algorithm>
+#include <cctype>
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <limits>
 #include <random>
 #include <string>
+#include <string_view>
 
 #include "glog/logging.h"
 #include "gmock/gmock.h"
@@ -45,7 +48,7 @@ TEST(VecBasicTest, Test) {
         counter++;
     }
     //no vectorized
-    //expect vectorized not not
+    //expect vectorized but not
     auto bvec2 = dvec > 1024;
     Vec<double> dvec2 = dvec[bvec2];
     ASSERT_EQ(dvec2.len(), counter);
@@ -63,7 +66,11 @@ TEST(VecBasicTest, Test) {
         static inline ResultType apply(int& i) { return i * i; }
     };
     //expect vectorized
-    ivec2.vec_transform<SquareFunctionImpl>();
+    ivec2.apply<SquareFunctionImpl>();
+
+    // test functional power
+    std::function<int(const int&)> m_power = [](const int& x) { return pow(2, x); };
+    ivec2.apply(m_power);
 }
 
 TEST(VecBasicTest, IteratorTest) {
@@ -97,24 +104,48 @@ TEST(VecBasicTest, IteratorTest) {
 }
 
 TEST(VecBasicTest, FixedStringTest) {
+    LOG(INFO) << "sizeof(FixedString):" << sizeof(FixedString);
+    ASSERT_EQ(sizeof(FixedString), 0);
+    char pod_test_str[32];
+    FixedString* fixed_str = reinterpret_cast<FixedString*>(pod_test_str);
+    ASSERT_EQ((void*)fixed_str->data, (void*)pod_test_str);
+
     const char* test_text = "Hello World";
     char tester[4096];
     strcpy(tester, test_text);
     tester[strlen(test_text)] = '!';
-    LOG(INFO) << "sizeof(test_text) " << sizeof(test_text);
+    LOG(INFO) << "sizeof(test_text):" << sizeof(test_text) << ",strlen():" << strlen(test_text);
     ASSERT_EQ(strncmp(tester, test_text, strlen(test_text)), 0);
 
     Vec<FixedString> vec(11, 1024);
     vec = test_text;
     for (int i = 0; i < vec.len(); i++) {
-        strncmp(vec[i], test_text, sizeof(test_text));
+        ASSERT_EQ(strncmp(vec[i].data, test_text, strlen(test_text)), 0);
     }
 
     Vec<FixedString> vec2(11, 1024);
     vec2 = std::move(vec);
     std::string str = "test";
     vec2.set(str, 100);
-    ASSERT_EQ(strncmp(vec2[100], str.c_str(), str.length()), 0);
+    ASSERT_EQ(strncmp(vec2[100].data, str.c_str(), str.length()), 0);
+
+    vec2.push_back(str);
+    ASSERT_EQ(vec2.len(), 1024 + 1);
+    ASSERT_EQ(vec2[1024].data, str);
+
+    struct FixedStringReverseApply {
+        static void apply(FixedString& x, int size) {
+            int len = strnlen(x.data, size);
+            std::reverse(VecIterator(x.data), VecIterator(x.data + len));
+        }
+    };
+
+    vec2.apply<FixedStringReverseApply>();
+    ASSERT_EQ(vec2[100].data, std::string("tset"));
+
+    auto vec2_len = vec2.strlen();
+    ASSERT_EQ(vec2_len.len(), 1025);
+    ASSERT_EQ(vec2_len[100], 4);
 }
 } // namespace vec
 
