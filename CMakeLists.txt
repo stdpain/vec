@@ -32,6 +32,9 @@ add_subdirectory(thirdparty/benchmark)
 add_subdirectory(thirdparty/gperftools)
 add_subdirectory(thirdparty/glog)
 
+
+add_subdirectory(openmp)
+
 include_directories(include)
 add_executable(test.out test/test.cpp)
 target_link_libraries(test.out tcmalloc_and_profiler glog gtest gmock m pthread)
@@ -39,3 +42,6 @@ target_link_libraries(test.out tcmalloc_and_profiler glog gtest gmock m pthread)
 
 add_executable(bench_function_call.out test/bench/bench_function_call.cpp)
 target_link_libraries(bench_function_call.out benchmark pthread)
+
+add_executable(simd_test.out test/simd_test.cpp)
+target_link_libraries(simd_test.out gtest)

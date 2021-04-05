@@ -53,7 +53,7 @@ static void VirtualCall2(benchmark::State& state) {
   for(int i = 0; i < 1024;++i) {
     input_block.push_back(i);
   }
-  Expression *expression = new SumExpression();
+  Expression *expression = new SumExpressionV2();
   Context context;
 
   for (auto _ : state) {
