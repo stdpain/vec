@@ -5,7 +5,8 @@ export PATH=/opt/compiler/gcc-10/bin:$PATH
 export LIBRT=/opt/compiler/gcc-10/lib64/librt.so
 
 BUILD_THREAD=12
-BUILD_TYPE=Debug
+#BUILD_TYPE=Debug
+BUILD_TYPE=Release
 BUILD_DIR=build_$BUILD_TYPE
 DIR=$(cd $(dirname $0) && pwd ) 
 
@@ -20,5 +21,6 @@ cd $DIR/$BUILD_DIR &&
         -Dgperftools_build_benchmark=OFF \
         -DBUILD_TESTING=OFF \
         -DLIBRT=$LIBRT \
+        -DFMT_INSTALL=ON \
         -DCMAKE_INSTALL_PREFIX=`pwd`/install .. \
         && make -j $BUILD_THREAD  && make install

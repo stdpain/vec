@@ -10,3 +10,6 @@
 [submodule "thirdparty/glog"]
 	path = thirdparty/glog
 	url = https://github.com/google/glog
+[submodule "thirdparty/fmt"]
+	path = thirdparty/fmt
+	url = https://github.com/fmtlib/fmt

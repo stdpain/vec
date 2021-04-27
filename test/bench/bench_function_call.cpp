@@ -44,6 +44,7 @@ static void VirtualCall(benchmark::State& state) {
     for(int i = 0;i < input_block.size();++i) {
       expression->update(&context, input_block[i]); // update
     }
+    benchmark::DoNotOptimize(context);
   }
 }
 BENCHMARK(VirtualCall);
@@ -60,6 +61,7 @@ static void VirtualCall2(benchmark::State& state) {
     for(int i = 0;i < input_block.size();++i) {
       ((SumExpressionV2*)(expression))->update(&context, input_block[i]); // update
     }
+    benchmark::DoNotOptimize(context);
   }
 }
 BENCHMARK(VirtualCall2);
@@ -76,6 +78,7 @@ static void FunctionCall(benchmark::State& state) {
       for(int i = 0;i < input_block.size();++i) {
         expression->update(&context, input_block[i]); // update
       }
+      benchmark::DoNotOptimize(context);
   }
 }
 BENCHMARK(FunctionCall);
