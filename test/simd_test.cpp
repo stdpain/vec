@@ -10,12 +10,12 @@
 
 TEST(SIMDTest, BasicTest) {
     // create a vector all element equals to 3.14
-    __m256 fltx4 = _mm256_set1_ps(3.14f);
-    fltx4[0] = 1.32f;   // valid
-    float f = fltx4[1]; // valid
+    __m256 fltx8 = _mm256_set1_ps(3.14f);
+    fltx8[0] = 1.32f;   // valid
+    float f = fltx8[1]; // valid
 
     ASSERT_FLOAT_EQ(f, 3.14f);
-    ASSERT_FLOAT_EQ(fltx4[0], 1.32f);
+    ASSERT_FLOAT_EQ(fltx8[0], 1.32f);
 
     // create a int type vector
     __m256i int32x16 = _mm256_set1_epi32(0x3355ff);
@@ -49,6 +49,10 @@ TEST(SIMDTest, BasicTest) {
         // store vector to flot array
         _mm_storeu_ps(fary, f);
     }
+    
+    __m256 v = _mm256_set_ps(1,2,3,4,5,6,7,8);
+    __m256 hval = _mm256_hadd_ps(fltx8, v);
+    ASSERT_FLOAT_EQ(hval[0], 1.32f + 3.14f);
 }
 
 int main(int argc, char** argv) {
