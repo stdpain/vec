@@ -1,0 +1,37 @@
+cmake_minimum_required (VERSION 3.8)
+project(liblua)
+
+FILE(GLOB LUAFILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
+FILE(GLOB LUA_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
+FILE(GLOB LUA_C ${CMAKE_CURRENT_SOURCE_DIR}/src/lua.c)
+FILE(GLOB LUAC_C ${CMAKE_CURRENT_SOURCE_DIR}/src/luac.c)
+FILE(GLOB LUAMAKE ${CMAKE_CURRENT_SOURCE_DIR}/src/Makefile)
+FILE(GLOB PUB_INC ${CMAKE_CURRENT_SOURCE_DIR}/src/lua.h 
+                  ${CMAKE_CURRENT_SOURCE_DIR}/src/luaconf.h 
+                  ${CMAKE_CURRENT_SOURCE_DIR}/src/lua.hpp
+                  ${CMAKE_CURRENT_SOURCE_DIR}/src/lualib.h
+                  ${CMAKE_CURRENT_SOURCE_DIR}/src/lauxlib.h
+)
+
+list(REMOVE_ITEM LUAFILES ${LUA_C})
+list(REMOVE_ITEM LUAFILES ${LUAC_C})
+list(REMOVE_ITEM LUAFILES ${LUAMAKE})
+
+MESSAGE(STATUS  ${LUAFILES})
+ADD_LIBRARY(liblua STATIC ${LUAFILES})
+
+ADD_EXECUTABLE(lua ${LUA_C})
+
+target_link_libraries(lua liblua)
+
+INSTALL(TARGETS liblua 
+       DESTINATION lib
+)
+
+INSTALL(TARGETS lua
+        DESTINATION bin
+)
+
+INSTALL(FILES ${PUB_INC}
+        DESTINATION include
+)
