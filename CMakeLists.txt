@@ -26,14 +26,15 @@ else()
     message(FATAL_ERROR "Unknown build type: ${CMAKE_BUILD_TYPE}")
 endif()
 
-# gtest
+# thirdparty
 add_subdirectory(thirdparty/googletest)
 add_subdirectory(thirdparty/benchmark)
 add_subdirectory(thirdparty/gperftools)
 add_subdirectory(thirdparty/glog)
 add_subdirectory(thirdparty/fmt)
 
-
+# submodule
+add_subdirectory(bench)
 add_subdirectory(openmp)
 
 include_directories(include)

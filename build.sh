@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-export CC=/opt/compiler/gcc-10/bin/gcc
-export CXX=/opt/compiler/gcc-10/bin/g++
-export PATH=/opt/compiler/gcc-10/bin:$PATH
-export LIBRT=/opt/compiler/gcc-10/lib64/librt.so
+if [ ! $GCC_HOME ];then
+    echo "Not Found GCC_HOME using default GCC"
+else
+    export CC=$GCC_HOME/bin/gcc
+    export CXX=$GCC_HOME/bin/g++
+    export PATH=$GCC_HOME/bin:$PATH
+fi
 
 BUILD_THREAD=12
 #BUILD_TYPE=Debug
@@ -20,7 +23,6 @@ cd $DIR/$BUILD_DIR &&
         -Dgperftools_enable_frame_pointers=ON \
         -Dgperftools_build_benchmark=OFF \
         -DBUILD_TESTING=OFF \
-        -DLIBRT=$LIBRT \
         -DFMT_INSTALL=ON \
         -DCMAKE_INSTALL_PREFIX=`pwd`/install .. \
-        && make -j $BUILD_THREAD  && make install
+        && cmake --build . --parallel $BUILD_THREAD && cmake --install .
