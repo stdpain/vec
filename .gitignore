@@ -6,3 +6,6 @@ build
 build_Debug
 build_Release
 *.log
+*.class
+compile_commands.json
+java/java
