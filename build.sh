@@ -23,6 +23,7 @@ cd $DIR/$BUILD_DIR &&
         -Dgperftools_enable_frame_pointers=ON \
         -Dgperftools_build_benchmark=OFF \
         -DBUILD_TESTING=OFF \
+        -DBENCHMARK_ENABLE_TESTING=OFF \
         -DFMT_INSTALL=ON \
         -DCMAKE_INSTALL_PREFIX=`pwd`/install .. \
         && cmake --build . --parallel $BUILD_THREAD && cmake --install .
