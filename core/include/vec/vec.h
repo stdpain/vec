@@ -296,6 +296,15 @@ public:
         return vec;
     }
 
+    template<typename Trans>
+    Vec vec_transform(Trans&& trans) {
+        Vec<T> vec(_len);
+        for (int i = 0; i < _len; ++i) {
+            vec[i] = trans(_data[i]);
+        }
+        return vec;
+    }
+
     void sort() { std::sort(_data, _data + _len); }
 
     void push_back(const T& t) {

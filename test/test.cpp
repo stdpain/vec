@@ -71,6 +71,11 @@ TEST(VecBasicTest, Test) {
     // test functional power
     std::function<int(const int&)> m_power = [](const int& x) { return pow(2, x); };
     ivec2.apply(m_power);
+
+    auto vec3 = ivec2.vec_transform([](const int& x) { return x * 2; });
+    for (int i = 0; i < vec3.len(); i++) {
+        ASSERT_EQ(vec3[i], ivec2[i] * 2);
+    }
 }
 
 TEST(VecBasicTest, IteratorTest) {

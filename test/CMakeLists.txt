@@ -14,7 +14,10 @@ target_link_libraries(test.out
 )
 #target_link_libraries(test.out glog gtest gmock pthread)
 
-add_executable(bench_function_call.out ${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_function_call.cpp)
+add_executable(bench_function_call.out 
+    ${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_function_call.cpp
+)
+
 target_link_libraries(bench_function_call.out 
     benchmark 
     pthread
