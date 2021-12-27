@@ -1,17 +1,19 @@
 #include "jni.h"
 
+#include <unistd.h>
+
 #include <cassert>
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <unistd.h>
+#include <thread>
 
 void callGC(JNIEnv* env) {
-  auto system_clazz = env->FindClass("java/lang/System");
-  assert(system_clazz);
-  auto gc_method = env->GetStaticMethodID(system_clazz, "gc", "()V");
-  assert(gc_method);
-  env->CallStaticVoidMethod(system_clazz, gc_method);
+    auto system_clazz = env->FindClass("java/lang/System");
+    assert(system_clazz);
+    auto gc_method = env->GetStaticMethodID(system_clazz, "gc", "()V");
+    assert(gc_method);
+    env->CallStaticVoidMethod(system_clazz, gc_method);
 }
 
 void dumpString(JNIEnv* env, jthrowable throwable) {
@@ -146,14 +148,15 @@ void test_jni_basic() {
         jmethodID UDFLoaderContructor = env->GetMethodID(clazz, "<init>", "(Ljava/lang/String;)V");
         assert(UDFLoaderContructor != nullptr);
         jobject UDFLoaderInstance =
-            env->NewObject(clazz, UDFLoaderContructor, env->NewStringUTF(load_path.c_str()));
+                env->NewObject(clazz, UDFLoaderContructor, env->NewStringUTF(load_path.c_str()));
         dumpStringIfException(env);
         assert(UDFLoaderInstance);
         dumpString(env, UDFLoaderInstance);
         // invoke findClass
         auto method = env->GetMethodID(clazz, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
         assert(method);
-        auto hello2_clazz = env->CallObjectMethod(UDFLoaderInstance, method, env->NewStringUTF("Hello2"));
+        auto hello2_clazz =
+                env->CallObjectMethod(UDFLoaderInstance, method, env->NewStringUTF("Hello2"));
         dumpStringIfException(env);
         assert(hello2_clazz);
         jmethodID hello2_construct = env->GetMethodID((jclass)hello2_clazz, "<init>", "()V");
@@ -164,13 +167,36 @@ void test_jni_basic() {
         assert(hello2_invoke_m);
         env->CallVoidMethod(hello2_obj, hello2_invoke_m);
         {
-            jobject UDFLoaderInstance2 =
-                env->NewObject(clazz, UDFLoaderContructor, env->NewStringUTF(load_path.c_str()));
-            
-            auto hello2_clazz = env->CallObjectMethod(UDFLoaderInstance2, method, env->NewStringUTF("Hello2"));
+            jobject UDFLoaderInstance2 = env->NewObject(clazz, UDFLoaderContructor,
+                                                        env->NewStringUTF(load_path.c_str()));
+
+            auto hello2_clazz =
+                    env->CallObjectMethod(UDFLoaderInstance2, method, env->NewStringUTF("Hello2"));
             jmethodID hello2_construct = env->GetMethodID((jclass)hello2_clazz, "<init>", "()V");
             auto hello2_obj = env->NewObject((jclass)hello2_clazz, hello2_construct);
             auto hello2_invoke_m = env->GetMethodID((jclass)hello2_clazz, "invoke", "()V");
+
+            {
+                // Test Concurrency
+                std::thread thr([&]() {
+                    JNIEnv* env2;
+                    int rc = vm->AttachCurrentThread((void**)&env2, nullptr);
+                    jmethodID hello2_construct =
+                            env2->GetMethodID((jclass)hello2_clazz, "<init>", "()V");
+                    assert(hello2_construct != nullptr);
+                    auto hello2_obj_2 = env2->NewObject((jclass)hello2_clazz, hello2_construct);
+                    assert(hello2_obj_2 != nullptr);
+                    // auto hello2_invoke_m = env2->GetMethodID((jclass)hello2_clazz, "invoke", "()V");
+
+                    auto hello2_clazz = env->CallObjectMethod(UDFLoaderInstance2, method,
+                                                              env->NewStringUTF("Hello2"));
+
+                    env2->DeleteLocalRef(hello2_obj_2);
+                    vm->DetachCurrentThread();
+                });
+                thr.join();
+            }
+
             env->CallVoidMethod(hello2_obj, hello2_invoke_m);
             env->DeleteLocalRef(hello2_obj);
             env->DeleteLocalRef(hello2_clazz);
@@ -181,12 +207,47 @@ void test_jni_basic() {
             // not the same thread
             sleep(1);
         }
-        
+
         std::cout << "call GC" << std::endl;
         env->DeleteLocalRef(hello2_obj);
         callGC(env);
     }
-    
+    std::cout << "Trace"
+              << "Test Integer" << std::endl;
+    // Test Class convert
+    {
+        jclass intc = env->FindClass("java/lang/Integer");
+        assert(intc != nullptr);
+        jmethodID valueOf = env->GetStaticMethodID(intc, "valueOf", "(I)Ljava/lang/Integer;");
+        assert(valueOf != nullptr);
+        jvalue values[1];
+        values[0].i = 12345;
+        jobject int_obj = env->CallStaticObjectMethodA(intc, valueOf, values);
+        assert(int_obj != nullptr);
+        dumpString(env, int_obj);
+    }
+    std::cout << "Trace"
+              << "Test bytes" << std::endl;
+    // Test bytes
+    {
+        jclass charsets = env->FindClass("java/nio/charset/StandardCharsets");
+        assert(charsets != nullptr);
+        auto fieldId = env->GetStaticFieldID(charsets, "UTF_8", "Ljava/nio/charset/Charset;");
+        assert(fieldId != nullptr);
+        jobject utf8_charsets = env->GetStaticObjectField(charsets, fieldId);
+        assert(utf8_charsets);
+
+        jclass stringC = env->FindClass("java/lang/String");
+        jmethodID stringCon =
+                env->GetMethodID(stringC, "<init>", "([BLjava/nio/charset/Charset;)V");
+        assert(stringCon);
+        const char* bytes = "Hello";
+        auto bytesArr = env->NewByteArray(5);
+        env->SetByteArrayRegion(bytesArr, 0, 5, (const signed char*)bytes);
+        jobject nstr = env->NewObject(stringC, stringCon, bytesArr, utf8_charsets);
+        assert(nstr);
+        dumpString(env, nstr);
+    }
     // Shutdown the VM.
     vm->DestroyJavaVM();
 }
