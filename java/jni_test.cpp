@@ -248,6 +248,15 @@ void test_jni_basic() {
         assert(nstr);
         dumpString(env, nstr);
     }
+    {
+        char buffer[1024];
+        jclass passbuffer = env->FindClass("PassBuffer");
+        assert(passbuffer);
+        auto methodID = env->GetStaticMethodID(passbuffer, "invoke", "(Ljava/nio/ByteBuffer;)V");
+        assert(methodID);
+        auto dbuf = env->NewDirectByteBuffer(buffer, 1024);
+        env->CallStaticVoidMethod(passbuffer, methodID, dbuf);
+    }
     // Shutdown the VM.
     vm->DestroyJavaVM();
 }
