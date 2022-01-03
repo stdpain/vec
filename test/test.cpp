@@ -108,13 +108,7 @@ TEST(VecBasicTest, IteratorTest) {
     ASSERT_EQ(counter, counter2);
 }
 
-TEST(VecBasicTest, FixedStringTest) {
-    LOG(INFO) << "sizeof(FixedString):" << sizeof(FixedString);
-    ASSERT_EQ(sizeof(FixedString), 0);
-    char pod_test_str[32];
-    FixedString* fixed_str = reinterpret_cast<FixedString*>(pod_test_str);
-    ASSERT_EQ((void*)fixed_str->data, (void*)pod_test_str);
-
+TEST(VecBasicTest, StringTest) {
     const char* test_text = "Hello World";
     char tester[4096];
     strcpy(tester, test_text);
@@ -122,31 +116,30 @@ TEST(VecBasicTest, FixedStringTest) {
     LOG(INFO) << "sizeof(test_text):" << sizeof(test_text) << ",strlen():" << strlen(test_text);
     ASSERT_EQ(strncmp(tester, test_text, strlen(test_text)), 0);
 
-    Vec<FixedString> vec(11, 1024);
+    Vec<std::string> vec(1024);
     vec = test_text;
     for (int i = 0; i < vec.len(); i++) {
-        ASSERT_EQ(strncmp(vec[i].data, test_text, strlen(test_text)), 0);
+        ASSERT_EQ(vec[i], test_text);
     }
 
-    Vec<FixedString> vec2(11, 1024);
+    Vec<std::string> vec2(1024);
     vec2 = std::move(vec);
     std::string str = "test";
     vec2.set(str, 100);
-    ASSERT_EQ(strncmp(vec2[100].data, str.c_str(), str.length()), 0);
+    ASSERT_EQ(vec2[100], str);
 
     vec2.push_back(str);
     ASSERT_EQ(vec2.len(), 1024 + 1);
-    ASSERT_EQ(vec2[1024].data, str);
+    ASSERT_EQ(vec2[1024], str);
 
-    struct FixedStringReverseApply {
-        static void apply(FixedString& x, int size) {
-            int len = strnlen(x.data, size);
-            std::reverse(VecIterator(x.data), VecIterator(x.data + len));
+    struct StringReverseApply {
+        static void apply(std::string& x) {
+            std::reverse(x.begin(), x.end());
         }
     };
 
-    vec2.apply<FixedStringReverseApply>();
-    ASSERT_EQ(vec2[100].data, std::string("tset"));
+    vec2.apply<StringReverseApply>();
+    ASSERT_EQ(vec2[100], std::string("tset"));
 
     auto vec2_len = vec2.strlen();
     ASSERT_EQ(vec2_len.len(), 1025);
