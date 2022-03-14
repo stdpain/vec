@@ -18,7 +18,16 @@ add_executable(bench_function_call.out
     ${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_function_call.cpp
 )
 
+add_executable(bench_gather.out 
+    ${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_gather.cpp
+)
+
 target_link_libraries(bench_function_call.out 
+    benchmark 
+    pthread
+)
+
+target_link_libraries(bench_gather.out 
     benchmark 
     pthread
 )

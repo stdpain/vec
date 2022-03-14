@@ -10,3 +10,5 @@ SSE Filter, AVX Filter, BranchLess Filter (?)
 https://quick-bench.com/q/mDJ7eDX5VfMYEWPii3L_Xy7-KnE
 Filter performance in always 1 (?)
 https://quick-bench.com/q/_vhng5XeTPvRAbyQbJm3tZ3cxGk
+SIMD a[i] = b[c[i]]
+https://quick-bench.com/q/78Jxjq_Vi2-d1zq_2n01XKJr3UI
