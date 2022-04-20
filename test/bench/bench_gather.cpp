@@ -8,7 +8,7 @@
 #include <vector>
 
 constexpr int bucket_sz = 1024;
-constexpr int elements_sz = 4096*1000;
+constexpr int elements_sz = 4096 * 1000;
 constexpr int probe_sz = 4096;
 
 struct Context {
