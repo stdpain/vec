@@ -8,12 +8,14 @@ else
 fi
 
 BUILD_THREAD=12
-BUILD_TYPE=Debug
-#BUILD_TYPE=Release
+#BUILD_TYPE=Debug
+BUILD_TYPE=Release
 BUILD_DIR=build_$BUILD_TYPE
 DIR=$(cd $(dirname $0) && pwd ) 
 
-#rm -rf build
+export CMAKE_GENERATOR="Ninja"
+
+rm -rf build
 mkdir $DIR/$BUILD_DIR
 cd $DIR/$BUILD_DIR && 
     cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \

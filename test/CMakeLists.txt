@@ -12,25 +12,17 @@ target_link_libraries(test.out
     m 
     pthread
 )
-#target_link_libraries(test.out glog gtest gmock pthread)
 
-add_executable(bench_function_call.out 
-    ${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_function_call.cpp
-)
+FUNCTION(ADD_BENCH TEST_NAME)
+    ADD_EXECUTABLE(${TEST_NAME}.out ${CMAKE_CURRENT_SOURCE_DIR}/bench/${TEST_NAME}.cpp)
+    TARGET_LINK_LIBRARIES(${TEST_NAME}.out benchmark pthread)
+ENDFUNCTION()
 
-add_executable(bench_gather.out 
-    ${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_gather.cpp
-)
+ADD_BENCH(bench_function_call)
+ADD_BENCH(bench_gather)
+ADD_BENCH(bench_filter)
 
-target_link_libraries(bench_function_call.out 
-    benchmark 
-    pthread
-)
-
-target_link_libraries(bench_gather.out 
-    benchmark 
-    pthread
-)
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_filter.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2")
 
 add_executable(simd_test.out ${CMAKE_CURRENT_SOURCE_DIR}/simd_test.cpp)
 target_link_libraries(simd_test.out 
