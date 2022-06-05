@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 #include "vec/vec.h"
 #include "vec/vec_string.h"
+#include "vec/binary_vec.h"
 
 namespace vec {
 TEST(VecBasicTest, Test) {

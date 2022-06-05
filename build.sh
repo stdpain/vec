@@ -8,8 +8,8 @@ else
 fi
 
 BUILD_THREAD=12
-#BUILD_TYPE=Debug
-BUILD_TYPE=Release
+BUILD_TYPE=ASAN
+#BUILD_TYPE=Release
 BUILD_DIR=build_$BUILD_TYPE
 DIR=$(cd $(dirname $0) && pwd ) 
 
@@ -27,5 +27,6 @@ cd $DIR/$BUILD_DIR &&
         -DBUILD_TESTING=OFF \
         -DBENCHMARK_ENABLE_TESTING=OFF \
         -DFMT_INSTALL=ON \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -DCMAKE_INSTALL_PREFIX=`pwd`/install .. \
         && cmake --build . --parallel $BUILD_THREAD && cmake --install .
