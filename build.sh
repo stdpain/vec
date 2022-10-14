@@ -8,8 +8,8 @@ else
 fi
 
 BUILD_THREAD=12
-BUILD_TYPE=ASAN
-#BUILD_TYPE=Release
+#BUILD_TYPE=ASAN
+BUILD_TYPE=Release
 BUILD_DIR=build_$BUILD_TYPE
 DIR=$(cd $(dirname $0) && pwd ) 
 

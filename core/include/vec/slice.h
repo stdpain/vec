@@ -158,8 +158,8 @@ struct SliceInline {
             memcpy(prefix.data, data_, size_);
         } else {
             memcpy(prefix.data, data_, 4);
-            data.pointer = reinterpret_cast<char*>(data_);
         }
+        data.pointer = reinterpret_cast<char*>(data_);
     }
 
     int32_t size;

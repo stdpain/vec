@@ -12,34 +12,7 @@ using namespace vec;
 
 const int batch_size = 4096;
 
-struct Generate_SSB_SHIP_MODE {
-    Slice operator()() {
-        auto& str = ssb_shipmode[rand() % ssb_shipmode.size()];
-        return Slice(str.data(), str.size());
-    }
-    template <class TypeSlice>
-    TypeSlice get() {
-        auto& str = ssb_shipmode[rand() % ssb_shipmode.size()];
-        return TypeSlice(str.data(), str.size());
-    }
-
-private:
-    inline static std::vector<std::string> ssb_shipmode{"TRUCK",   "AIR",  "RAIL", "MAIL",
-                                                        "REG AIR", "SHIP", "FOB"};
-};
-
-template <int x>
-struct Generate_FIXED_x {
-    Generate_FIXED_x() {
-        for (int i = 0; i < batch_size; ++i) {
-            std::string raw_val;
-            for (int j = 0; j < x; ++j) {
-                raw_val.push_back(rand() % 256);
-            }
-            buffers.emplace_back(std::move(raw_val));
-        }
-    }
-
+struct StringGenerater {
     Slice operator()() {
         auto& str = buffers[rand() % buffers.size()];
         return Slice(str.data(), str.size());
@@ -51,8 +24,42 @@ struct Generate_FIXED_x {
         return TypeSlice(str.data(), str.size());
     }
 
-private:
-    inline static std::vector<std::string> buffers;
+protected:
+    std::vector<std::string> buffers;
+};
+
+struct Generate_SSB_SHIP_MODE : StringGenerater {
+    Generate_SSB_SHIP_MODE() {
+        buffers = {"TRUCK", "AIR", "RAIL", "MAIL", "REG AIR", "SHIP", "FOB"};
+    }
+};
+
+template <int x, bool same = false>
+struct Generate_FIXED_x : StringGenerater {
+    Generate_FIXED_x() {
+        for (int i = 0; i < batch_size; ++i) {
+            std::string raw_val;
+            for (int j = 0; j < x; ++j) {
+                if constexpr (same) {
+                    raw_val.push_back('x');
+                } else {
+                    raw_val.push_back(rand() % 256);
+                }
+            }
+            buffers.emplace_back(std::move(raw_val));
+        }
+    }
+};
+
+// 2020-03-02
+struct Generate_Date_Str : StringGenerater {
+public:
+    Generate_Date_Str() {
+        std::string raw_val = "2020-03-";
+        for (int i = 0; i < batch_size; ++i) {
+            buffers.emplace_back(raw_val + std::to_string(i % 31));
+        }
+    }
 };
 
 struct Generate {
@@ -68,13 +75,12 @@ struct Generate {
 template <class Col, class StringGen>
 static void StringColCreateBench(benchmark::State& state) {
     StringGen gen;
+    std::vector<Slice> slices;
+    Generate::build(batch_size, slices, gen);
+
     for (auto _ : state) {
         {
             Col vec;
-            std::vector<Slice> slices;
-            state.PauseTiming();
-            Generate::build(batch_size, slices, gen);
-            state.ResumeTiming();
             vec.build_strings(slices);
             state.PauseTiming();
         }
@@ -106,17 +112,23 @@ static void CompareBench(benchmark::State& state) {
     }
 }
 
-// BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_SSB_SHIP_MODE);
-// BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<4>);
-// BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<8>);
-// BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<16>);
-// BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<128>);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_SSB_SHIP_MODE);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_Date_Str);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<4>);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<12>);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<12, true>);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<16, true>);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<128>);
+BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<128, true>);
 
-// BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_SSB_SHIP_MODE);
-// BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<4>);
-// BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<8>);
-// BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<16>);
-// BENCHMARK_TEMPLATE(FlatBinaryColCreate, Generate_FIXED_x<128>);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_SSB_SHIP_MODE);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_Date_Str);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<4>);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<12>);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<12, true>);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<16, true>);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<128>);
+BENCHMARK_TEMPLATE(InlineBinaryColCreate, Generate_FIXED_x<128, true>);
 
 template <class StringGen>
 constexpr void (*InlineBinaryCmpBench)(benchmark::State& state) =
@@ -127,11 +139,21 @@ constexpr void (*FlatBinaryCmpBench)(benchmark::State& state) =
         &CompareBench<vec::FlatBinaryVec, Slice, StringGen>;
 
 BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_SSB_SHIP_MODE);
+BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_Date_Str);
 BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_FIXED_x<4>);
+BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_FIXED_x<12>);
+BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_FIXED_x<12, true>);
+BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_FIXED_x<16, true>);
 BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_FIXED_x<128>);
+BENCHMARK_TEMPLATE(FlatBinaryCmpBench, Generate_FIXED_x<128, true>);
 
 BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_SSB_SHIP_MODE);
+BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_Date_Str);
 BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_FIXED_x<4>);
+BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_FIXED_x<12>);
+BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_FIXED_x<12, true>);
+BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_FIXED_x<16, true>);
 BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_FIXED_x<128>);
+BENCHMARK_TEMPLATE(InlineBinaryCmpBench, Generate_FIXED_x<128, true>);
 
 BENCHMARK_MAIN();
