@@ -12,6 +12,8 @@ target_link_libraries(test.out
 )
 
 include_directories(../core/include)
+include_directories(../thirdparty/phmap/parallel_hashmap/)
+include_directories(../thirdparty/robin-map/include)
 
 FUNCTION(ADD_BENCH TEST_NAME)
     ADD_EXECUTABLE(${TEST_NAME}.out ${CMAKE_CURRENT_SOURCE_DIR}/bench/${TEST_NAME}.cpp)
@@ -22,6 +24,7 @@ ADD_BENCH(bench_function_call)
 ADD_BENCH(bench_gather)
 ADD_BENCH(bench_filter)
 ADD_BENCH(bench_binarycolumn)
+ADD_BENCH(bench_map)
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_filter.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2")
 

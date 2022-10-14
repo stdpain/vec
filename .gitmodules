@@ -16,3 +16,6 @@
 [submodule "thirdparty/phmap"]
 	path = thirdparty/phmap
 	url = https://github.com/greg7mdp/parallel-hashmap
+[submodule "thirdparty/robin-map"]
+	path = thirdparty/robin-map
+	url = https://github.com/Tessil/robin-map
