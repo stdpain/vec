@@ -199,16 +199,45 @@ int AVXBranchLess(Filter& filter, Container& container) {
     return (int)(output - r);
 }
 
+int ScalarBranceLess(Filter& filter, Container& container) {
+    auto* f = filter.data();
+    int n = container.size();
+    int cnt = 0;
+    for (size_t i = 0; i < n; ++i) {
+        container[cnt] = container[i];
+        cnt += f[i] != 0;
+    }
+    return cnt;
+}
+
+int ScalarFilter(Filter& filter, Container& container) {
+    auto* f = filter.data();
+    int n = container.size();
+    int cnt = 0;
+    for (size_t i = 0; i < n; ++i) {
+        if (f[i]) {
+            container[cnt++] = container[i];
+        }
+    }
+    return cnt;
+}
+
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, NormalAVXFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, AVXBranchLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, NormalSSEFilter);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, ScalarBranceLess);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, ScalarFilter);
 
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalAVXFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, AVXBranchLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalSSEFilter);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarBranceLess);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarFilter);
 
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalAVXFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, AVXBranchLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalSSEFilter);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarBranceLess);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarFilter);
 
 BENCHMARK_MAIN();
