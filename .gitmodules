@@ -19,3 +19,6 @@
 [submodule "thirdparty/robin-map"]
 	path = thirdparty/robin-map
 	url = https://github.com/Tessil/robin-map
+[submodule "thirdparty/emhash"]
+	path = thirdparty/emhash
+	url = https://github.com/ktprime/emhash.git

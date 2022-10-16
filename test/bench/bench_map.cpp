@@ -2,11 +2,15 @@
 #include <phmap.h>
 #include <tsl/robin_map.h>
 
+#include <emhash/hash_table234.hpp>
+#include <emhash/hash_table7.hpp>
+#include <emilib/emilib.hpp>
 #include <iostream>
 #include <random>
 #include <sparsehash/dense_hash_map>
 #include <sparsehash/sparse_hash_map>
 #include <unordered_map>
+#include <utility>
 
 constexpr int data_range = 5'000'000;
 size_t chunk_size = 4096;
@@ -54,7 +58,6 @@ static void flat_hash_map_insert_test(benchmark::State& state) {
 static void robin_hash_map_insert_test(benchmark::State& state) {
     tsl::robin_map<int64_t, char*> raw_map;
     insert(raw_map, state);
-
 }
 
 static void dense_hash_map_insert_test(benchmark::State& state) {
@@ -63,9 +66,34 @@ static void dense_hash_map_insert_test(benchmark::State& state) {
     insert(raw_map, state);
 }
 
+static void emhash_map_insert_test(benchmark::State& state) {
+    emilib::HashMap<int64_t,char*> raw_map;
+    insert(raw_map, state);
+}
+
+static void emhash_map_7_insert_test(benchmark::State& state) {
+    emhash7::HashMap<int64_t,char*> raw_map;
+    insert(raw_map, state);
+}
+
+static void emhash_map_234_insert_test(benchmark::State& state) {
+    emilib4::HashMap<int64_t, char*> raw_map;
+    insert(raw_map, state);
+}
+
+/*
+std_insert_test               1027188 ns      1027234 ns          664
+flat_hash_map_insert_test      178690 ns       178707 ns         3821
+robin_hash_map_insert_test      52921 ns        52909 ns        12100
+emhash_map_insert_test         126173 ns       126250 ns         5817
+*/
+
 BENCHMARK(std_insert_test);
 BENCHMARK(flat_hash_map_insert_test);
 BENCHMARK(robin_hash_map_insert_test);
 BENCHMARK(dense_hash_map_insert_test);
+// BENCHMARK(emhash_map_insert_test);
+BENCHMARK(emhash_map_7_insert_test);
+// BENCHMARK(emhash_map_234_insert_test);
 
 BENCHMARK_MAIN();

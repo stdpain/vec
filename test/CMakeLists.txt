@@ -15,6 +15,7 @@ include_directories(../core/include)
 include_directories(../thirdparty/phmap/parallel_hashmap/)
 include_directories(../thirdparty/robin-map/include)
 include_directories(../thirdparty/include)
+include_directories(../thirdparty/emhash/thirdparty/)
 
 FUNCTION(ADD_BENCH TEST_NAME)
     ADD_EXECUTABLE(${TEST_NAME}.out ${CMAKE_CURRENT_SOURCE_DIR}/bench/${TEST_NAME}.cpp)
