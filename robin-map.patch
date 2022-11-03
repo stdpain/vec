@@ -1,5 +1,5 @@
 diff --git a/include/tsl/robin_hash.h b/include/tsl/robin_hash.h
-index 89c7c96..e875636 100644
+index 89c7c96..42ba282 100644
 --- a/include/tsl/robin_hash.h
 +++ b/include/tsl/robin_hash.h
 @@ -278,6 +278,24 @@ class bucket_entry : public bucket_entry_hash<StoreHash> {
@@ -27,26 +27,36 @@ index 89c7c96..e875636 100644
    template <typename... Args>
    void set_value_of_empty_bucket(distance_type dist_from_ideal_bucket,
                                   truncated_hash_type hash,
-@@ -821,6 +839,11 @@ class robin_hash : private Hash, private KeyEqual, private GrowthPolicy {
+@@ -821,6 +839,21 @@ class robin_hash : private Hash, private KeyEqual, private GrowthPolicy {
      return try_emplace(std::forward<K>(key), std::forward<Args>(args)...).first;
    }
  
 +  template <class K, class F>
-+  std::pair<iterator, bool> lazy_emplace(const K& key, F&& f) {
-+    return insert_impl_lz(key, key, std::forward<F>(f));
++  iterator lazy_emplace(const K& key, F&& f) {
++    return insert_impl_lz(key, [this](const K& key) { return hash_key(key);} ,key, std::forward<F>(f)).first;
++  }
++
++  template <class K, class F>
++  iterator lazy_emplace_with_hash(const K& key, size_t hashval, F&& f) {
++    return insert_impl_lz(key, [hashval](const K& key) { return hashval;} ,key, std::forward<F>(f)).first;
++  }
++
++  void prefetch_hash(size_t hash) {
++    std::size_t ibucket = bucket_for_hash(hash);
++    __builtin_prefetch(static_cast<const void*>(m_buckets + ibucket));
 +  }
 +
    /**
     * Here to avoid `template<class K> size_type erase(const K& key)` being used
     * when we use an `iterator` instead of a `const_iterator`.
-@@ -1263,6 +1286,55 @@ class robin_hash : private Hash, private KeyEqual, private GrowthPolicy {
+@@ -1263,6 +1296,55 @@ class robin_hash : private Hash, private KeyEqual, private GrowthPolicy {
      return std::make_pair(iterator(m_buckets + ibucket), true);
    }
  
-+  template <class K, class... Args>
-+  std::pair<iterator, bool> insert_impl_lz(const K& key,
++  template <class K, class HashProvider, class... Args>
++  std::pair<iterator, bool> insert_impl_lz(const K& key, HashProvider&& hash_provider,
 +                                        Args&&... value_type_args) {
-+    const std::size_t hash = hash_key(key);
++    const std::size_t hash = hash_provider(key);
 +
 +    std::size_t ibucket = bucket_for_hash(hash);
 +    distance_type dist_from_ideal_bucket = 0;
@@ -95,7 +105,7 @@ index 89c7c96..e875636 100644
    template <class... Args>
    void insert_value(std::size_t ibucket, distance_type dist_from_ideal_bucket,
                      truncated_hash_type hash, Args&&... value_type_args) {
-@@ -1270,6 +1342,17 @@ class robin_hash : private Hash, private KeyEqual, private GrowthPolicy {
+@@ -1270,6 +1352,17 @@ class robin_hash : private Hash, private KeyEqual, private GrowthPolicy {
      insert_value_impl(ibucket, dist_from_ideal_bucket, hash, value);
    }
  
@@ -114,16 +124,29 @@ index 89c7c96..e875636 100644
                      truncated_hash_type hash, value_type&& value) {
      insert_value_impl(ibucket, dist_from_ideal_bucket, hash, value);
 diff --git a/include/tsl/robin_map.h b/include/tsl/robin_map.h
-index aeb354c..d4dc48f 100644
+index aeb354c..e134ee3 100644
 --- a/include/tsl/robin_map.h
 +++ b/include/tsl/robin_map.h
-@@ -332,6 +332,11 @@ class robin_map {
+@@ -332,6 +332,24 @@ class robin_map {
                                   std::forward<Args>(args)...);
    }
  
 +  template <class F>
-+  std::pair<iterator, bool> lazy_emplace(const key_type& k, F&& f) {
-+    return m_ht.lazy_emplace(k, std::move(f));
++  iterator lazy_emplace(const key_type& k, F&& f) {
++    return m_ht.lazy_emplace(k, std::move(f)).first;
++  }
++
++  template <class F>
++  iterator lazy_emplace_with_hash(const key_type& k, size_t hashval, F&& f) {
++    return m_ht.lazy_emplace_with_hash(k, hashval, std::move(f)).first;
++  }
++
++  void prefetch_hash(size_t hash) {
++    m_ht.prefetch_hash(hash);
++  }
++
++  void prefetch(const key_type& k) {
++    m_ht.prefetch_hash(Hash()(k));
 +  }
 +
    iterator erase(iterator pos) { return m_ht.erase(pos); }
