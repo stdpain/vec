@@ -29,4 +29,5 @@ cd $DIR/$BUILD_DIR &&
         -DFMT_INSTALL=ON \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -DCMAKE_INSTALL_PREFIX=`pwd`/install .. \
+        -DJAVA_HOME=${JAVA_HOME} \
         && cmake --build . --parallel $BUILD_THREAD && cmake --install .

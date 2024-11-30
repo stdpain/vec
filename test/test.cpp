@@ -145,6 +145,8 @@ TEST(VecBasicTest, StringTest) {
     auto vec2_len = vec2.strlen();
     ASSERT_EQ(vec2_len.len(), 1025);
     ASSERT_EQ(vec2_len[100], 4);
+
+    std::vector<int> raw;
 }
 } // namespace vec
 

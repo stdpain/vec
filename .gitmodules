@@ -1,24 +1,25 @@
 [submodule "thirdparty/googletest"]
 	path = thirdparty/googletest
-	url = https://github.com/google/googletest/
+	url = git@github.com:google/googletest.git
 [submodule "thirdparty/benchmark"]
 	path = thirdparty/benchmark
-	url = https://github.com/google/benchmark.git
+    url = git@github.com:google/benchmark.git
 [submodule "thirdparty/gperftools"]
 	path = thirdparty/gperftools
-	url = https://github.com/stdpain/gperftools
+    url = git@github.com:stdpain/gperftools.git
 [submodule "thirdparty/glog"]
 	path = thirdparty/glog
-	url = https://github.com/google/glog
+    url = git@github.com:google/glog.git
 [submodule "thirdparty/fmt"]
 	path = thirdparty/fmt
-	url = https://github.com/fmtlib/fmt
+    url = git@github.com:fmtlib/fmt.git
 [submodule "thirdparty/phmap"]
 	path = thirdparty/phmap
-	url = https://github.com/greg7mdp/parallel-hashmap
+    url = git@github.com:greg7mdp/parallel-hashmap.git
 [submodule "thirdparty/robin-map"]
 	path = thirdparty/robin-map
 	url = https://github.com/Tessil/robin-map
+    url = git@github.com:Tessil/robin-map.git
 [submodule "thirdparty/emhash"]
 	path = thirdparty/emhash
-	url = https://github.com/ktprime/emhash.git
+    url = git@github.com:ktprime/emhash.git

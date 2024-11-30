@@ -4,8 +4,15 @@
 
 namespace vec {
 template <class T>
-class VecIterator : public std::iterator<std::random_access_iterator_tag, T> {
+class VecIterator {
 public:
+    // https://stackoverflow.com/questions/43268146/why-is-stditerator-deprecated
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = T;
+    using difference_type = T;
+    using pointer = T*;
+    using reference = T&;
+
     VecIterator(T* pos) : _ptr(pos) {}
     VecIterator& operator=(const VecIterator& iter) {
         _ptr = iter._ptr;
