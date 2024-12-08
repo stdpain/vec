@@ -35,6 +35,7 @@ add_subdirectory(thirdparty/fmt)
 
 # submodule
 add_subdirectory(openmp)
+add_subdirectory(parallel)
 add_subdirectory(core)
 add_subdirectory(java)
 
