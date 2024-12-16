@@ -12,16 +12,16 @@ constexpr int elements_sz = 4096 * 1000;
 constexpr int probe_sz = 4096;
 
 struct Context {
-    std::vector<uint32_t> next;
-    std::vector<uint32_t> first;
+    std::vector<uint32_t> result;
+    std::vector<uint32_t> input;
     std::vector<uint32_t> buckets;
 };
 
 Context initCtx() {
     Context ctx;
     ctx.buckets.resize(probe_sz);
-    ctx.first.resize(bucket_sz);
-    ctx.next.resize(elements_sz);
+    ctx.input.resize(bucket_sz);
+    ctx.result.resize(elements_sz);
 
     std::default_random_engine generator;
     std::uniform_int_distribution<int> distribution(0, bucket_sz);
@@ -29,8 +29,8 @@ Context initCtx() {
     std::generate(ctx.buckets.begin(), ctx.buckets.end(),
                   [&]() { return distribution(generator); });
 
-    std::iota(ctx.first.begin(), ctx.first.end(), 0);
-    std::random_shuffle(ctx.first.begin(), ctx.first.end());
+    std::iota(ctx.input.begin(), ctx.input.end(), 0);
+    std::random_shuffle(ctx.input.begin(), ctx.input.end());
     return ctx;
 }
 
@@ -38,7 +38,7 @@ static void NormalImpl(benchmark::State& state) {
     auto ctx = initCtx();
     for (auto _ : state) {
         for (uint32_t i = 0; i < probe_sz; ++i) {
-            ctx.next[i] = ctx.first[ctx.buckets[i]];
+            ctx.result[i] = ctx.input[ctx.buckets[i]];
         }
         benchmark::DoNotOptimize(ctx);
     }
@@ -50,10 +50,10 @@ static void SIMDImpl(benchmark::State& state) {
         constexpr int mini_batch = 256 / 32;
         constexpr int loop_sz = probe_sz / mini_batch;
         const uint32_t* data = ctx.buckets.data();
-        uint32_t* dst = ctx.next.data();
+        uint32_t* dst = ctx.result.data();
         for (int i = 0; i < loop_sz; ++i) {
             __m256i loaded = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(data));
-            __m256i gathered = _mm256_i32gather_epi32((int32_t*)ctx.first.data(), loaded, 4);
+            __m256i gathered = _mm256_i32gather_epi32((int32_t*)ctx.input.data(), loaded, 4);
             _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst), gathered);
             data += 8;
             dst += 8;

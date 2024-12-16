@@ -30,6 +30,7 @@ ADD_BENCH(bench_binarycolumn)
 ADD_BENCH(bench_map)
 ADD_BENCH(bench_mem_access)
 ADD_BENCH(bench_pause)
+ADD_BENCH(bench_fnv)
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_filter.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2")
 
