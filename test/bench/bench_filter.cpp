@@ -1,3 +1,4 @@
+#include <cstdlib>
 #define BENCHMARK_HAS_CXX11
 #include <benchmark/benchmark.h>
 #include <immintrin.h>
@@ -195,6 +196,40 @@ int AVXBranchLess(Filter& filter, Container& container) {
     return (int)(output - r);
 }
 
+// now only support input data i32
+int AVX512BranchLess(Filter& filter, Container& data) {
+    size_t num_rows = data.size();
+    const uint8_t* filt_pos = filter.data();
+    const uint8_t* filt_end = filt_pos + num_rows;
+    const auto* data_pos = data.data();
+    int res_index = 0;
+
+    static constexpr size_t SIMD_BYTES = 16;
+    static constexpr size_t TYPE_SIZE = 4;
+
+    const __m128i zero16 = _mm_setzero_si128();
+    const uint8_t* filt_end_avx = filt_pos + num_rows / SIMD_BYTES * SIMD_BYTES;
+
+    while (filt_pos < filt_end_avx) {
+        uint16_t mask = _mm_movemask_epi8(_mm_cmpgt_epi8(
+                _mm_loadu_si128(reinterpret_cast<const __m128i*>(filt_pos)), zero16));
+        __m512i compressed = _mm512_maskz_compress_epi32(mask, _mm512_loadu_epi32(data_pos));
+        _mm512_storeu_epi32(data.data() + res_index, compressed);
+        res_index += _mm_popcnt_u32(mask);
+        filt_pos += 16;
+        data_pos += 16;
+    }
+
+    while (filt_pos < filt_end) {
+        if (*filt_pos) data[res_index] = *data_pos;
+
+        ++filt_pos;
+        ++data_pos;
+    }
+
+    return res_index;
+}
+
 int ScalarBranceLess(Filter& filter, Container& container) {
     auto* f = filter.data();
     int n = container.size();
@@ -223,37 +258,42 @@ BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, AVXBranchLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, NormalSSEFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, ScalarBranceLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, ScalarFilter);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<RandomGenerator>, AVX512BranchLess);
 
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalAVXFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, AVXBranchLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalSSEFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarBranceLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarFilter);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysOneGenerator<uint8_t>>, AVX512BranchLess);
 
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalAVXFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, AVXBranchLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalSSEFilter);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarBranceLess);
 BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarFilter);
+BENCHMARK_TEMPLATE(BENCH_Filter, FilterIniter<AlwaysZeroGenerator<uint8_t>>, AVX512BranchLess);
 
 BENCHMARK_MAIN();
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Benchmark                                                                           Time             CPU   Iterations
 // ---------------------------------------------------------------------------------------------------------------------
-// BENCH_Filter<FilterIniter<RandomGenerator>, NormalAVXFilter>                     2226 ns         2226 ns       311415
-// BENCH_Filter<FilterIniter<RandomGenerator>, AVXBranchLess>                       1158 ns         1158 ns       607556
-// BENCH_Filter<FilterIniter<RandomGenerator>, NormalSSEFilter>                     2182 ns         2181 ns       301329
-// BENCH_Filter<FilterIniter<RandomGenerator>, ScalarBranceLess>                    2619 ns         2618 ns       270948
-// BENCH_Filter<FilterIniter<RandomGenerator>, ScalarFilter>                       12922 ns        12916 ns        54577
-// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalAVXFilter>          131 ns          131 ns      5423553
-// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, AVXBranchLess>           1149 ns         1149 ns       606757
-// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalSSEFilter>          330 ns          330 ns      2123937
-// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarBranceLess>        2733 ns         2732 ns       256189
-// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarFilter>            3006 ns         3005 ns       232957
-// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalAVXFilter>         170 ns          170 ns      4123567
-// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, AVXBranchLess>          1401 ns         1401 ns       564596
-// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalSSEFilter>         280 ns          280 ns      2788675
-// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarBranceLess>       2607 ns         2607 ns       259076
-// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarFilter>           2943 ns         2942 ns       262539
+// BENCH_Filter<FilterIniter<RandomGenerator>, NormalAVXFilter>                     1698 ns         1698 ns       419405
+// BENCH_Filter<FilterIniter<RandomGenerator>, AVXBranchLess>                       1159 ns         1159 ns       610084
+// BENCH_Filter<FilterIniter<RandomGenerator>, NormalSSEFilter>                     2204 ns         2204 ns       302260
+// BENCH_Filter<FilterIniter<RandomGenerator>, ScalarBranceLess>                    2839 ns         2839 ns       252482
+// BENCH_Filter<FilterIniter<RandomGenerator>, ScalarFilter>                       12659 ns        12656 ns        57213
+// BENCH_Filter<FilterIniter<RandomGenerator>, AVX512BranchLess>                     406 ns          406 ns      1588886
+// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalAVXFilter>          131 ns          131 ns      5341773
+// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, AVXBranchLess>           1149 ns         1149 ns       615539
+// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, NormalSSEFilter>          329 ns          329 ns      2128082
+// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarBranceLess>        2589 ns         2588 ns       267840
+// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, ScalarFilter>            3000 ns         3000 ns       233448
+// BENCH_Filter<FilterIniter<AlwaysOneGenerator<uint8_t>>, AVX512BranchLess>         346 ns          346 ns      2021010
+// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalAVXFilter>         170 ns          170 ns      4118749
+// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, AVXBranchLess>          1143 ns         1143 ns       610553
+// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, NormalSSEFilter>         249 ns          249 ns      2808937
+// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarBranceLess>       2593 ns         2593 ns       270051
+// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, ScalarFilter>           3854 ns         3852 ns       181704
+// BENCH_Filter<FilterIniter<AlwaysZeroGenerator<uint8_t>>, AVX512BranchLess>        348 ns          348 ns      2010223
