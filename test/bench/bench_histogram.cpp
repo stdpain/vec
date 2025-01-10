@@ -8,7 +8,7 @@
 #include <vector>
 
 // result in field [0,255]
-constexpr int bucket_sz = 256;
+constexpr int bucket_sz = 255;
 constexpr int elements_sz = 4096;
 
 struct Context {
@@ -22,8 +22,9 @@ Context initCtx() {
     ctx.result.resize(bucket_sz);
 
     std::default_random_engine generator;
-    std::uniform_int_distribution<int> distribution(0, bucket_sz);
-    for (auto& v : ctx.result) {
+    // [a, b]
+    std::uniform_int_distribution<int> distribution(0, bucket_sz - 1);
+    for (auto& v : ctx.input) {
         v = distribution(generator);
     }
     return ctx;
@@ -66,7 +67,7 @@ static void Histogram4(benchmark::State& state) {
         ctx.result.assign(bucket_sz, 0);
         uint32_t counts[4] = {0, 0, 0, 0};
         const int* __restrict arr = ctx.input.data();
-        for (uint32_t i = 0; i <= elements_sz; i++) {
+        for (uint32_t i = 0; i < elements_sz; i++) {
             counts[0] += arr[i] == 0;
             counts[1] += arr[i] == 1;
             counts[2] += arr[i] == 2;
@@ -88,7 +89,7 @@ static void HistogramN(benchmark::State& state) {
         uint32_t counts[N];
         memset(counts, 0, sizeof(counts));
         const int* __restrict arr = ctx.input.data();
-        for (uint32_t i = 0; i <= elements_sz; i++) {
+        for (uint32_t i = 0; i < elements_sz; i++) {
             // unroll here
             for (int j = 0; j < N; ++j) {
                 counts[j] += arr[i] == j;
@@ -106,8 +107,12 @@ static void GatherImpl(benchmark::State& state) {
     for (auto _ : state) {
         ctx.result.assign(bucket_sz, 0);
         alignas(16) uint32_t tmpbins[bucket_sz][16] = {{0}};
+        __m512i base = _mm512_setr_epi32(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
         for (uint32_t i = 0; i + 16 <= elements_sz; i += 16) {
             __m512i idx = _mm512_loadu_si512(ctx.input.data() + i);
+            // idx = idx * 16 + base
+            idx = _mm512_slli_epi32(idx, 4);
+            idx = _mm512_add_epi32(idx, base);
             __m512i values = _mm512_i32gather_epi32(idx, tmpbins, 4);
             values = _mm512_add_epi32(values, _mm512_set1_epi32(1));
             _mm512_i32scatter_epi32(tmpbins, idx, values, 4);
@@ -130,13 +135,13 @@ BENCHMARK(GatherImpl);
 
 BENCHMARK_MAIN();
 
-// 
+//
 // ---------------------------------------------------------
 // Benchmark               Time             CPU   Iterations
 // ---------------------------------------------------------
-// NormalImpl           6878 ns         6878 ns       101835
-// NormalNoDeps         2235 ns         2235 ns       313240
-// Histogram4            580 ns          580 ns      1185211
-// HistogramN<8>        1140 ns         1140 ns       614686
-// HistogramN<32>       4532 ns         4532 ns       153859
-// GatherImpl           5094 ns         5093 ns       137144
+// NormalImpl           2844 ns         2844 ns       246432
+// NormalNoDeps         2351 ns         2351 ns       297744
+// Histogram4            603 ns          603 ns      1159806
+// HistogramN<8>        1113 ns         1113 ns       629615
+// HistogramN<32>       4367 ns         4367 ns       160305
+// GatherImpl           4963 ns         4963 ns       140609
