@@ -33,6 +33,7 @@ ADD_BENCH(bench_pause)
 ADD_BENCH(bench_fnv)
 ADD_BENCH(bench_count_zero)
 ADD_BENCH(bench_histogram)
+ADD_BENCH(bench_sum_group_by)
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_filter.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_count_zero.cpp PROPERTIES COMPILE_FLAGS "-msse4.2 -mavx2 -mbmi2")
