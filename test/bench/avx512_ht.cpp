@@ -221,3 +221,26 @@ static void SCALARJHT_BAISC(benchmark::State& state) {
 BENCHMARK(SCALARJHT_BAISC);
 BENCHMARK(AVX512JHT_BAISC);
 BENCHMARK_MAIN();
+
+// AWS m6i.xlarge
+// Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz
+// ----------------------------------------------------------
+// Benchmark                Time             CPU   Iterations
+// ----------------------------------------------------------
+// SCALARJHT_BAISC       6471 ns         6471 ns       108314
+// AVX512JHT_BAISC       5486 ns         5485 ns       127708
+
+// AWS m5d.4xlarge
+// Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz
+// ----------------------------------------------------------
+// Benchmark                Time             CPU   Iterations
+// ----------------------------------------------------------
+// SCALARJHT_BAISC       9398 ns         9398 ns        74436
+// AVX512JHT_BAISC       6115 ns         6115 ns       114483
+
+// Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz (WITH GDS patched)
+// ----------------------------------------------------------
+// Benchmark                Time             CPU   Iterations
+// ----------------------------------------------------------
+// SCALARJHT_BAISC       7381 ns         7380 ns        95122
+// AVX512JHT_BAISC      11531 ns        11530 ns        60831
