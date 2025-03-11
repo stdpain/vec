@@ -76,13 +76,17 @@ inline int sse_memcmp2(const char* p1, size_t size1, const char* p2, size_t size
 }
 
 inline int sse_memcmp3(const char* p1, const char* p2, size_t size) {
+    if (size == 0) return 0;
     __m128i left = _mm_lddqu_si128((__m128i*)(p1));
     __m128i right = _mm_lddqu_si128((__m128i*)(p2));
     __m128i nz = ~_mm_cmpeq_epi8(left, right);
     unsigned short mask = _mm_movemask_epi8(nz);
-    int index = __builtin_ctz(mask);
-    if (index > size) return 0;
-    return (int)(uint8_t)p1[index] - (int)(uint8_t)p2[index];
+    size_t index = __builtin_ctz(mask);
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=119186
+    if (mask == 0 || index >= size) return 0;
+    int l = (uint8_t)p1[index];
+    int r = (uint8_t)p2[index];
+    return l - r;
 }
 
 inline int memcompare2(const char* p1, size_t size1, const char* p2, size_t size2) {

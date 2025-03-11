@@ -14,7 +14,7 @@ ENDFUNCTION()
 
 ADD_TEST(test)
 ADD_TEST(test_sse_memcmp)
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/test_sse_memcmp.cpp PROPERTIES COMPILE_FLAGS "-msse4.2 -mavx2")
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/test_sse_memcmp.cpp PROPERTIES COMPILE_FLAGS "-msse4.2 -mavx2 -fno-strict-aliasing")
 
 include_directories(../core/include)
 include_directories(../thirdparty/phmap/parallel_hashmap/)
