@@ -14,7 +14,9 @@ ENDFUNCTION()
 
 ADD_TEST(test)
 ADD_TEST(test_sse_memcmp)
+ADD_TEST(test_decimal_converter)
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/test_sse_memcmp.cpp PROPERTIES COMPILE_FLAGS "-msse4.2 -mavx2 -fno-strict-aliasing")
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/test_decimal_converter.cpp PROPERTIES COMPILE_FLAGS "-msse4.2 -mavx2 -fno-strict-aliasing")
 
 include_directories(../core/include)
 include_directories(../thirdparty/phmap/parallel_hashmap/)
@@ -41,12 +43,14 @@ ADD_BENCH(bench_histogram)
 ADD_BENCH(bench_sum_group_by)
 ADD_BENCH(avx512_ht)
 ADD_BENCH(bench_memcmp)
+ADD_BENCH(bench_decimal_convert)
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_filter.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_count_zero.cpp PROPERTIES COMPILE_FLAGS "-msse4.2 -mavx2 -mbmi2")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_histogram.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/avx512_ht.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_memcmp.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f -mavx512bw -mavx512vl")
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_decimal_convert.cpp PROPERTIES COMPILE_FLAGS "-mavx2")
 
 add_executable(simd_test.out ${CMAKE_CURRENT_SOURCE_DIR}/simd_test.cpp)
 target_link_libraries(simd_test.out 
