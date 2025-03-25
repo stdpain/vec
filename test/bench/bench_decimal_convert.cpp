@@ -37,28 +37,85 @@ constexpr __m128i generate_shuf_msk() {
 }
 
 template <int BINSZ>
-void sse_convert(const uint8_t* __restrict src_null_data, uint8_t* __restrict dst_data,
-                 size_t length) {
+void sse_convert(const uint8_t* __restrict src_data, uint8_t* __restrict dst_data, size_t length) {
     __m128i mask = generate_shuf_msk<BINSZ>();
     for (size_t i = 0; i < length; ++i) {
-        __m128i xmm = _mm_loadu_si128((__m128i*)src_null_data);
+        __m128i xmm = _mm_loadu_si128((__m128i*)src_data);
         xmm = _mm_shuffle_epi8(xmm, mask);
         _mm_storeu_si128((__m128i*)dst_data, xmm);
-        src_null_data += BINSZ;
+        src_data += BINSZ;
         dst_data += 16;
     }
 }
 
 template <int BINSZ>
-void scalar_convert(const uint8_t* __restrict src_null_data, uint8_t* __restrict dst_data,
+void sse_convert_nullable(const uint8_t* __restrict src_data,
+                          const uint8_t* __restrict src_null_data, uint8_t* __restrict dst_data,
+                          size_t length) {
+    __m128i mask = generate_shuf_msk<BINSZ>();
+    size_t i = 0;
+    for (i = 0; i + 2 <= length; i += 2) {
+        short nulls;
+        memcpy(&nulls, src_null_data, 2);
+        src_null_data += 2;
+        if (nulls == 0x0101) {
+            __m128i xmm = _mm_lddqu_si128((__m128i*)src_data);
+            xmm = _mm_shuffle_epi8(xmm, mask);
+            _mm_storeu_si128((__m128i*)dst_data, xmm);
+
+            xmm = _mm_lddqu_si128((__m128i*)(src_data + 12));
+            xmm = _mm_shuffle_epi8(xmm, mask);
+            _mm_storeu_si128((__m128i*)(dst_data + 16), xmm);
+        } else if (nulls == 0) {
+        } else {
+            __m128i xmm = _mm_lddqu_si128((__m128i*)src_data);
+            xmm = _mm_shuffle_epi8(xmm, mask);
+            _mm_storeu_si128((__m128i*)dst_data, xmm);
+            src_data += BINSZ * !(nulls & 0x01);
+
+            xmm = _mm_lddqu_si128((__m128i*)src_data);
+            xmm = _mm_shuffle_epi8(xmm, mask);
+            _mm_storeu_si128((__m128i*)(dst_data + 16), xmm);
+            src_data += BINSZ * !(nulls & 0x0100);
+        }
+        dst_data += sizeof(__m128i) * 2;
+    }
+    // process tail
+    for (; i < length; ++i) {
+        __m128i xmm = _mm_loadu_si128((__m128i*)src_data);
+        xmm = _mm_shuffle_epi8(xmm, mask);
+        _mm_storeu_si128((__m128i*)dst_data, xmm);
+        src_data += BINSZ;
+        dst_data += sizeof(__m128i);
+    }
+}
+
+template <int BINSZ>
+void scalar_convert(const uint8_t* __restrict src_data, uint8_t* __restrict dst_data,
                     size_t length) {
     for (size_t i = 0; i < length; ++i) {
         __int128_t value;
-        memcpy(&value, src_null_data, sizeof(__int128_t));
+        memcpy(&value, src_data, sizeof(__int128_t));
         value = gbswap_128(value);
         value = value >> ((sizeof(value) - BINSZ) * 8);
         memcpy(dst_data, &value, sizeof(__int128_t));
-        src_null_data += BINSZ;
+        src_data += BINSZ;
+        dst_data += 16;
+    }
+}
+
+template <int BINSZ>
+void scalar_nullable_convert(const uint8_t* __restrict src_data,
+                             const uint8_t* __restrict src_null_data, uint8_t* __restrict dst_data,
+                             size_t length) {
+    for (size_t i = 0; i < length; ++i) {
+        if (src_null_data[i]) continue;
+        __int128_t value;
+        memcpy(&value, src_data, sizeof(__int128_t));
+        value = gbswap_128(value);
+        value = value >> ((sizeof(value) - BINSZ) * 8);
+        memcpy(dst_data, &value, sizeof(__int128_t));
+        src_data += BINSZ;
         dst_data += 16;
     }
 }
@@ -75,6 +132,20 @@ static void SSEImpl(benchmark::State& state) {
     }
 }
 
+static void SSENullableImpl(benchmark::State& state) {
+    std::vector<uint8_t> srcs;
+    std::vector<uint8_t> dsts;
+    std::vector<uint8_t> nulls;
+
+    srcs.resize(12 * 4096 + 15);
+    dsts.resize(16 * 4096);
+    nulls.resize(4096);
+
+    for (auto _ : state) {
+        sse_convert_nullable<12>(srcs.data(), nulls.data(), dsts.data(), 4096);
+    }
+}
+
 static void ScalarImpl(benchmark::State& state) {
     std::vector<uint8_t> srcs;
     std::vector<uint8_t> dsts;
@@ -87,12 +158,30 @@ static void ScalarImpl(benchmark::State& state) {
     }
 }
 
+static void ScalarNullableImpl(benchmark::State& state) {
+    std::vector<uint8_t> srcs;
+    std::vector<uint8_t> dsts;
+    std::vector<uint8_t> nulls;
+
+    srcs.resize(12 * 4096 + 15);
+    dsts.resize(16 * 4096);
+    nulls.resize(4096);
+
+    for (auto _ : state) {
+        scalar_nullable_convert<12>(srcs.data(), nulls.data(), dsts.data(), 4096);
+    }
+}
+
 BENCHMARK(ScalarImpl);
 BENCHMARK(SSEImpl);
+BENCHMARK(SSENullableImpl);
+BENCHMARK(ScalarNullableImpl);
 BENCHMARK_MAIN();
 
-// -----------------------------------------------------
-// Benchmark           Time             CPU   Iterations
-// -----------------------------------------------------
-// ScalarImpl       4603 ns         4603 ns       152183
-// SSEImpl          2316 ns         2315 ns       302468
+// -------------------------------------------------------------
+// Benchmark                   Time             CPU   Iterations
+// -------------------------------------------------------------
+// ScalarImpl               4568 ns         4567 ns       153352
+// SSEImpl                  2296 ns         2295 ns       305293
+// SSENullableImpl          1306 ns         1306 ns       535438
+// ScalarNullableImpl       6124 ns         6123 ns       114366
