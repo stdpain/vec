@@ -39,6 +39,7 @@ constexpr __m128i generate_shuf_msk() {
 template <int BINSZ>
 void sse_convert(const uint8_t* __restrict src_data, uint8_t* __restrict dst_data, size_t length) {
     __m128i mask = generate_shuf_msk<BINSZ>();
+    #pragma GCC unroll 2
     for (size_t i = 0; i < length; ++i) {
         __m128i xmm = _mm_loadu_si128((__m128i*)src_data);
         xmm = _mm_shuffle_epi8(xmm, mask);
@@ -59,6 +60,7 @@ void sse_convert_nullable(const uint8_t* __restrict src_data,
         memcpy(&nulls, src_null_data, 2);
         src_null_data += 2;
         if (nulls == 0x0101) {
+        } else if (nulls == 0) {
             __m128i xmm = _mm_lddqu_si128((__m128i*)src_data);
             xmm = _mm_shuffle_epi8(xmm, mask);
             _mm_storeu_si128((__m128i*)dst_data, xmm);
@@ -66,7 +68,6 @@ void sse_convert_nullable(const uint8_t* __restrict src_data,
             xmm = _mm_lddqu_si128((__m128i*)(src_data + 12));
             xmm = _mm_shuffle_epi8(xmm, mask);
             _mm_storeu_si128((__m128i*)(dst_data + 16), xmm);
-        } else if (nulls == 0) {
         } else {
             __m128i xmm = _mm_lddqu_si128((__m128i*)src_data);
             xmm = _mm_shuffle_epi8(xmm, mask);
@@ -181,7 +182,7 @@ BENCHMARK_MAIN();
 // -------------------------------------------------------------
 // Benchmark                   Time             CPU   Iterations
 // -------------------------------------------------------------
-// ScalarImpl               4568 ns         4567 ns       153352
-// SSEImpl                  2296 ns         2295 ns       305293
-// SSENullableImpl          1306 ns         1306 ns       535438
-// ScalarNullableImpl       6124 ns         6123 ns       114366
+// ScalarImpl               4562 ns         4562 ns       153302
+// SSEImpl                  2255 ns         2255 ns       310874
+// SSENullableImpl          2170 ns         2170 ns       323321
+// ScalarNullableImpl       6130 ns         6130 ns       110974
