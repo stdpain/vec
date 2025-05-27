@@ -45,6 +45,7 @@ ADD_BENCH(avx512_ht)
 ADD_BENCH(bench_memcmp)
 ADD_BENCH(bench_decimal_convert)
 ADD_BENCH(bench_link)
+ADD_BENCH(bench_create_timer)
 
 add_library(call SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bench/call.cpp)
 TARGET_LINK_LIBRARIES(bench_link.out call benchmark pthread)
