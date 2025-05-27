@@ -44,6 +44,10 @@ ADD_BENCH(bench_sum_group_by)
 ADD_BENCH(avx512_ht)
 ADD_BENCH(bench_memcmp)
 ADD_BENCH(bench_decimal_convert)
+ADD_BENCH(bench_link)
+
+add_library(call SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bench/call.cpp)
+TARGET_LINK_LIBRARIES(bench_link.out call benchmark pthread)
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_filter.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_count_zero.cpp PROPERTIES COMPILE_FLAGS "-msse4.2 -mavx2 -mbmi2")
