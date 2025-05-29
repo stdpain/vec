@@ -46,6 +46,7 @@ ADD_BENCH(bench_memcmp)
 ADD_BENCH(bench_decimal_convert)
 ADD_BENCH(bench_link)
 ADD_BENCH(bench_create_timer)
+ADD_BENCH(bench_selection)
 
 add_library(call SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bench/call.cpp)
 TARGET_LINK_LIBRARIES(bench_link.out call benchmark pthread)
@@ -56,6 +57,7 @@ set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_histogram.cp
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/avx512_ht.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_memcmp.cpp PROPERTIES COMPILE_FLAGS "-mavx2 -mbmi2 -mavx512f -mavx512bw -mavx512vl")
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_decimal_convert.cpp PROPERTIES COMPILE_FLAGS "-mavx2")
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/bench/bench_selection.cpp PROPERTIES COMPILE_FLAGS "-mavx512f -mavx512bw -mavx512vl")
 
 add_executable(simd_test.out ${CMAKE_CURRENT_SOURCE_DIR}/simd_test.cpp)
 target_link_libraries(simd_test.out 
